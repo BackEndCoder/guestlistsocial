@@ -484,7 +484,8 @@ input[type=submit],
 .actions ul li a,
 .actions a,
 .delete,
-.urlSubmit {
+.urlSubmit,
+.urlSubmit1 {
 	font-weight:normal;
 	padding: 4px 8px;
 	background: #dcdcdc;
@@ -728,11 +729,15 @@ span.counter.exceeded {
 .tweetbody {
 	width: 30%;
 	height: auto;
+	padding: 0;
+	overflow: auto;
 }
 
 textarea.editing {
 	font-size: 95%;
     height: 100%;
+    width: 100%;
+    padding: 6px 6px 0 6px;
     -webkit-box-sizing: border-box; /* <=iOS4, <= Android  2.3 */
        -moz-box-sizing: border-box; /* FF1+ */
             box-sizing: border-box; /* Chrome, IE8, Opera, Safari 5.1*/
@@ -763,4 +768,13 @@ textarea.editing {
 #submitTweet {
 	width: 75%;
 	float: left;
+}
+
+#table tr {
+	height: 75px;
+}
+
+.nopadding {
+	padding: 0;
+	height:75px;
 }

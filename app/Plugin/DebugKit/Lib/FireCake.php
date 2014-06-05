@@ -1,14 +1,5 @@
 <?php
 /**
- * FirePHP Class for CakePHP
- *
- * Provides most of the functionality offered by FirePHPCore
- * Interoperates with FirePHP extension for Firefox
- *
- * For more information see: http://www.firephp.org/
- *
- * PHP 5
- *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
  * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
@@ -17,7 +8,6 @@
  *
  * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
- * @package       DebugKit.Lib
  * @since         DebugKit 0.1
  * @license       http://www.opensource.org/licenses/mit-license.php MIT License
  */
@@ -39,10 +29,13 @@ if (!function_exists('firecake')) {
 }
 
 /**
- * Class FireCake
+ * FirePHP Class for CakePHP
  *
- * @package       DebugKit.Lib
- * @since         DebugKit 0.1
+ * Provides most of the functionality offered by FirePHPCore
+ * Interoperates with FirePHP extension for Firefox
+ *
+ * For more information see: http://www.firephp.org/
+ *
  */
 class FireCake {
 
@@ -94,7 +87,7 @@ class FireCake {
 /**
  * internal messageIndex counter
  *
- * @var int
+ * @var integer
  */
 	protected $_messageIndex = 1;
 
@@ -115,8 +108,8 @@ class FireCake {
 /**
  * FireCake output status
  *
- * @var bool
- **/
+ * @var boolean
+ */
 	protected $_enabled = true;
 
 /**
@@ -128,7 +121,7 @@ class FireCake {
 	public static function getInstance($class = null) {
 		static $instance = array();
 		if (!empty($class)) {
-			if (!$instance || strtolower($class) != strtolower(get_class($instance[0]))) {
+			if (!$instance || strtolower($class) !== strtolower(get_class($instance[0]))) {
 				$instance[0] = new $class();
 				$instance[0]->setOptions();
 			}
@@ -361,7 +354,7 @@ class FireCake {
 				for ($i = 0, $len = count($trace); $i < $len; $i++) {
 					$keySet = (isset($trace[$i]['class']) && isset($trace[$i]['function']));
 					$selfCall = ($keySet &&
-						strtolower($trace[$i]['class']) == 'firecake' &&
+						strtolower($trace[$i]['class']) === 'firecake' &&
 						in_array($trace[$i]['function'], $_this->_methodIndex)
 					);
 					if ($selfCall) {
@@ -432,7 +425,7 @@ class FireCake {
 		$message = array();
 		for ($i = 0, $len = count($trace); $i < $len; $i++) {
 			$keySet = (isset($trace[$i]['class']) && isset($trace[$i]['function']));
-			$selfCall = ($keySet && $trace[$i]['class'] == 'FireCake');
+			$selfCall = ($keySet && $trace[$i]['class'] === 'FireCake');
 			if (!$selfCall) {
 				$message = array(
 					'Class' => isset($trace[$i]['class']) ? $trace[$i]['class'] : '',
@@ -473,8 +466,8 @@ class FireCake {
  * Filter out recursion, so no errors are raised by json_encode or $javascript->object()
  *
  * @param mixed $object Object or variable to encode to string.
- * @param int $objectDepth Current Depth in object chains.
- * @param int $arrayDepth Current Depth in array chains.
+ * @param integer $objectDepth Current Depth in object chains.
+ * @param integer $arrayDepth Current Depth in array chains.
  * @return string|Object
  */
 	public static function stringEncode($object, $objectDepth = 1, $arrayDepth = 1) {
@@ -509,7 +502,7 @@ class FireCake {
 				$return[$key] = FireCake::stringEncode($value, 1, $arrayDepth + 1);
 			}
 		}
-		if (is_string($object) || is_numeric($object) || is_bool($object) || is_null($object)) {
+		if (is_string($object) || is_numeric($object) || is_bool($object) || $object === null) {
 			return $object;
 		}
 		return $return;
@@ -519,7 +512,7 @@ class FireCake {
  * Encode an object into JSON
  *
  * @param mixed $object Object or array to json encode
- * @param bool $skipEncode
+ * @param boolean $skipEncode
  * @internal param bool $doIt
  * @static
  * @return string

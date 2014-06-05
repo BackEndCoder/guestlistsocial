@@ -43,16 +43,16 @@ class UsersController extends AppController {
     $group = $this->User->Group;
 
     // Allow admins to everything
-    //$group->id = 1;
-    //$this->Acl->allow($group, 'controllers/teams/manage');
+    $group->id = 1;
+    $this->Acl->allow($group, 'controllers/teams/manageteam');
 
     // allow managers to posts and widgets
-    $group->id = 2;
-    $this->Acl->allow($group, 'controllers/teams/manage');
-
-    //$group->id = 5;
-    //$this->Acl->allow($group, 'controllers');
+    //$group->id = 2;
     //$this->Acl->allow($group, 'controllers/teams/manage');
+
+    $group->id = 5;
+    //$this->Acl->allow($group, 'controllers');
+    $this->Acl->allow($group, 'controllers/teams/manageteam');
 
     // allow basic users to log out
     //$this->Acl->allow($group, 'controllers/users/logout');

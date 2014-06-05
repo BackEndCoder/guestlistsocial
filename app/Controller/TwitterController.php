@@ -4,34 +4,14 @@ App::import('Vendor', 'OAuth/OAuthClient');
 class TwitterController extends AppController {
     public $components = array('Session', 'Auth');
     public $helpers =  array('Html' , 'Form');
-    var $uses = array('TwitterAccount', 'CronTweet', 'Tweet', 'User');
-
-    public function index() {
-        if (isset($this->request->data['accountSubmit'])) {
-            $screen_name = $this->request->data['accountSubmit'];
-            $new_oauth_tokens = $this->TwitterAccount->find('all', array('conditions' => array('screen_name' => $screen_name)));
-            $this->Session->write('access_token.oauth_token', $new_oauth_tokens[0]['TwitterAccount']['oauth_token']);
-            $this->Session->write('access_token.oauth_token_secret', $new_oauth_tokens[0]['TwitterAccount']['oauth_token_secret']);
-            $this->Session->write('access_token.account_id', $new_oauth_tokens[0]['TwitterAccount']['account_id']);
-            $this->Session->write('access_token.screen_name', $new_oauth_tokens[0]['TwitterAccount']['screen_name']);
-            $this->set('selected', $this->Session->read('access_token.screen_name'));
-        } else {
-            $this->set('selected', $this->Session->read('access_token.screen_name'));
-        }
-
-        $tweets = $this->CronTweet->find('all', array('fields' => array('id', 'body', 'time'), 'conditions' => array('account_id' => $this->Session->read('access_token.account_id'))));
-        $this->set('tweets', $tweets);
-        
-        if ($this->Session->read('Auth.User.id') == 0 || $this->Session->read('Auth.User.id') == 1) {
-            $accounts = $this->TwitterAccount->find('list', array('fields' => array('screen_name')));
-        } else {
-            $accounts = $this->TwitterAccount->find('list', array('fields' => array('screen_name'), 'conditions' => array('user_id' => $this->Session->read('Auth.User.id'))));
-        }
-        
-        $this->set('accounts', $accounts);
-    }
+    var $uses = array('TwitterAccount', 'CronTweet', 'Tweet', 'User', 'TwitterPermission', 'EditorialCalendar');
 
     public function admin() {
+        if (isset($this->request->data['currentmonth'])) {
+            $this->Session->write('Auth.User.monthSelector', $this->request->data['currentmonth']['Select Month']);
+        } elseif ($this->Session->read('Auth.User.monthSelector') == false) {
+            $this->Session->write('Auth.User.monthSelector', 0);
+        }
         if (isset($this->request->data['accountSubmit'])) {
             $screen_name = $this->request->data['accountSubmit'];
             $new_oauth_tokens = $this->TwitterAccount->find('all', array('conditions' => array('screen_name' => $screen_name)));
@@ -44,12 +24,13 @@ class TwitterController extends AppController {
             $this->set('selected', $this->Session->read('access_token.screen_name'));
         }
 
-        if ($this->Session->read('Auth.User.Team.id') !== 0) {
-            $conditions = array('team_id' => $this->Session->read('Auth.User.Team.id'));
+        if ($this->Session->read('Auth.User.Team.id')) {
+            $permissions = $this->TwitterPermission->find('list', array('fields' => 'twitter_account_id', 'conditions' => array('user_id' => $this->Session->read('Auth.User.id'))));
+            $conditions = array('account_id' => $permissions);
         } else {
             $conditions = array('user_id' => $this->Session->read('Auth.User.id'));
         }
-        $tweets = $this->Tweet->find('all', array('fields' => array('id', 'body', 'verified', 'client_verified', 'time', 'published', 'first_name'), 'conditions' => array('account_id' => $this->Session->read('access_token.account_id'))));
+        $tweets = $this->Tweet->find('all', array('fields' => array('id', 'body', 'verified', 'client_verified', 'time', 'published', 'first_name'), 'conditions' => array('account_id' => $this->Session->read('access_token.account_id')), 'order' => array('Tweet.timestamp' => 'ASC')));
         $this->set('tweets', $tweets);
 
         $info = $this->TwitterAccount->find('all', array('fields' => array('infolink'), 'conditions' => array('account_id' => $this->Session->read('access_token.account_id'))));
@@ -67,8 +48,11 @@ class TwitterController extends AppController {
         $this->set('accounts', $accounts);
     }
 
-    public function client() {
-        if (isset($this->request->data['accountSubmit'])) {// temporary until ACLs are in
+    public function calendar($months) {
+        if (isset($this->request->data['calendar_activated']['calendar_activated'])) {
+            $this->activateCalendar($this->request->data['calendar_activated']['calendar_activated']);
+        }
+        if (isset($this->request->data['accountSubmit'])) {
             $screen_name = $this->request->data['accountSubmit'];
             $new_oauth_tokens = $this->TwitterAccount->find('all', array('conditions' => array('screen_name' => $screen_name)));
             $this->Session->write('access_token.oauth_token', $new_oauth_tokens[0]['TwitterAccount']['oauth_token']);
@@ -80,16 +64,32 @@ class TwitterController extends AppController {
             $this->set('selected', $this->Session->read('access_token.screen_name'));
         }
 
-        $tweets = $this->Tweet->find('all', array('fields' => array('id', 'body', 'verified', 'client_verified'), 'conditions' => array('account_id' => $this->Session->read('access_token.account_id'), 'verified' => 1)));
-        $this->set('tweets', $tweets);
+        if ($this->Session->read('Auth.User.Team.id') !== 0) {
+            $permissions = $this->TwitterPermission->find('list', array('fields' => 'twitter_account_id', 'conditions' => array('user_id' => $this->Session->read('Auth.User.id'))));
+            $conditions = array('team_id' => $this->Session->read('Auth.User.Team.id'));
+        } else {
+            $conditions = array('user_id' => $this->Session->read('Auth.User.id'));
+        }
+        $calendar = $this->EditorialCalendar->find('all', array('conditions' => array('twitter_account_id' => $this->Session->read('access_token.account_id')), 'order' => array('EditorialCalendar.time' => 'ASC')));
+        $this->set('calendar', $calendar);
+
+        $info = $this->TwitterAccount->find('all', array('fields' => array('infolink'), 'conditions' => array('account_id' => $this->Session->read('access_token.account_id'))));
+        $this->set('info', $info);
+
+        $teamMembers = $this->User->find('all', array('fields' => array('first_name', 'group_id'), 'conditions' => array('team_id' => $this->Session->read('Auth.User.Team.id'))));
+        $this->set('teamMembers', $teamMembers);
         
         if ($this->Session->read('Auth.User.id') == 0 || $this->Session->read('Auth.User.id') == 1) {
             $accounts = $this->TwitterAccount->find('list', array('fields' => array('screen_name')));
         } else {
-            $accounts = $this->TwitterAccount->find('list', array('fields' => array('screen_name'), 'conditions' => array('user_id' => $this->Session->read('Auth.User.id'))));
+            $accounts = $this->TwitterAccount->find('list', array('fields' => array('screen_name'), 'conditions' => array('account_id' => $permissions)));
         }
         
         $this->set('accounts', $accounts);
+
+        if ($months) {
+            $this->set('months', $months);
+        }
     }
 
     public function connect() {
@@ -113,17 +113,24 @@ class TwitterController extends AppController {
         $this->Session->write('access_token.oauth_token_secret', $accessToken['oauth_token_secret']);
         $this->Session->write('access_token.screen_name', $accessToken['screen_name']);
 
-        $this->TwitterAccount->create();
-        $this->TwitterAccount->save($accessToken);
-        $this->TwitterAccount->saveField('user_id', $this->Session->read('Auth.User.id'));
-        $this->TwitterAccount->saveField('team_id', $this->Session->read('Auth.User.Team.id'));
-        
-        $account = $this->TwitterAccount->find('all', array('conditions' => array('screen_name' => $accessToken['screen_name'])));
-        $this->Session->write('access_token.account_id', $account[0]['TwitterAccount']['account_id']);
+        $count = $this->TwitterAccount->find('count', array('conditions' => array('screen_name' => $accessToken['screen_name'])));
 
+        if ($count == 0) {
+            $this->TwitterAccount->create();
+            $this->TwitterAccount->save($accessToken);
+            $this->TwitterAccount->saveField('user_id', $this->Session->read('Auth.User.id'));
+            $this->TwitterAccount->saveField('team_id', $this->Session->read('Auth.User.Team.id'));
+            
+            $account = $this->TwitterAccount->find('all', array('conditions' => array('screen_name' => $accessToken['screen_name'])));
+            $this->Session->write('access_token.account_id', $account[0]['TwitterAccount']['account_id']);
+        } else {
+            $this->Session->setFlash('This account is already linked to a user. Know the user? Ask for their team code and join their team!');
+            $this->redirect('/twitter/');
+        }
         $this->redirect('/twitter/info');//REMOVE WHEN REPORTING IS COMPLETE
 
         //setting database table for reporting archives
+        
         /*$modeldate = 'archive_' . strtolower(date('d-M-Y', time() - 60 * 60 * 24 * 1));
         $name = $accessToken['screen_name'];
         $oauth_token = $accessToken['oauth_token'];
@@ -159,12 +166,12 @@ class TwitterController extends AppController {
         $client = $this->createClient();
 
         if ($oauth_token&&$oauth_token_secret) {
-            $client->post($oauth_token, $oauth_token_secret, 'https://api.twitter.com/1.1/statuses/update.json', array('status' => $this->request->data['Tweet']));
+            $client->post($oauth_token, $oauth_token_secret, 'https://api.twitter.com/1.1/statuses/update.json', array('status' => 'HELLO'));
+            $this->Session->setflash('Tweet Sent');
         } else {
             $this->Session->setFlash('Please select an account to tweet from');
         }
 
-        $this->Session->setflash('Tweet Sent');
         $this->redirect('/twitter/');
     }
 
@@ -186,33 +193,27 @@ class TwitterController extends AppController {
         //$this->redirect('/twitter/');
     }
 
-    public function test() {//temporary verified and timed tweet save
-        if ($this->request->data) {
-                    //$this->request->data['CronTweet']['time']['hour'] += $this->Session->read('Auth.User.GMT_offset');
-                    $this->CronTweet->save($this->request->data);
-                    $this->CronTweet->saveField('user_id', $this->Session->read('Auth.User.id'));
-                    $this->CronTweet->saveField('account_id', $this->Session->read('access_token.account_id'));
-        }
-
-        //$this->redirect('/twitter/');
-    }
-
     public function edit() {
         foreach ($this->request->data['Tweet'] as $key) {
+            if ($key['id']) {
             $id = $key['id'];
             $this->Tweet->id = $id;
             $this->CronTweet->id = $id;
+            }
+
             if ($key['timestamp']) {
             $key['time'] = $key['timestamp'];
             $key['timestamp'] = strtotime($key['timestamp']);
             } else {
-
             $key['timestamp'] = 0;
             }
+
+            //$key['first_name'] = $this->Session->read('Auth.User.first_name');
+
             $key['user_id'] = $this->Session->read('Auth.User.id');
             $key['account_id'] = $this->Session->read('access_token.account_id');
             if ($this->Tweet->save($key)) {
-                if ($key['verified'] = 1) {
+                if ($key['verified'] == 1) {
                     $this->CronTweet->save($key);
                     $this->CronTweet->deleteAll(array('timestamp' => 0));
                 }
@@ -233,7 +234,7 @@ class TwitterController extends AppController {
     }
 
     public function tablerefresh() {
-        $tweets = $this->Tweet->find('all', array('fields' => array('id', 'body', 'verified', 'client_verified', 'time', 'published', 'first_name'), 'conditions' => array('account_id' => $this->Session->read('access_token.account_id'))));
+        $tweets = $this->Tweet->find('all', array('fields' => array('id', 'body', 'verified', 'client_verified', 'time', 'published', 'first_name'), 'conditions' => array('account_id' => $this->Session->read('access_token.account_id')), 'order' => array('Tweet.timestamp' => 'ASC')));
         $this->set('tweets', $tweets);
         $this->layout = '';
     }
@@ -248,5 +249,31 @@ class TwitterController extends AppController {
 
             $this->redirect('/twitter/');
         }
+    }
+
+    private function activateCalendar($data) {
+        if ($this->Session->read('Auth.User.Team.id') == 0) {
+            $conditions = array('id' => $this->Session->read('Auth.User.id'));
+        } else {
+            $conditions = array('team_id' => $this->Session->read('Auth.User.Team.id'));
+        }
+        $users = $this->User->find('list', array('conditions' => $conditions, 'fields' => 'id'));
+
+        foreach ($users as $key) {
+            $this->User->id = $key;
+            $this->User->savefield('calendar_activated', $data);
+        }
+        
+        $this->Session->write('Auth.User.calendar_activated', $data);
+        if ($data == 1) {
+            $this->Session->setFlash('Editorial Calendars have been activated for you team. Your team will now see them on the main page.');
+        } elseif ($data == 0) {
+            $this->Session->setFlash('Editorial Calendars deactivated.');
+        }
+    }
+
+
+    public function adminView() {
+
     }
 }

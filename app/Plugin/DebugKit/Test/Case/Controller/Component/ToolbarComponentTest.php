@@ -1,7 +1,5 @@
 <?php
 /**
- * DebugToolbar Test
- *
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
@@ -12,7 +10,6 @@
  *
  * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
- * @package       DebugKit.Test.Case.Controller.Component
  * @since         DebugKit 2.1
  * @license       http://www.opensource.org/licenses/mit-license.php MIT License
  */
@@ -28,7 +25,6 @@ App::uses('DebugTimer', 'DebugKit.Lib');
 /**
  * Class TestToolbarComponent
  *
- * @package       DebugKit.Test.Case.Controller.Component
  * @since         DebugKit 2.1
  */
 class TestToolbarComponent extends ToolbarComponent {
@@ -45,11 +41,10 @@ class TestToolbarComponent extends ToolbarComponent {
 }
 
 /**
- * DebugKitToolbarComponentTestCase Test case
+ * ToolbarComponentTestCase Test case
  *
- * @package       DebugKit.Test.Case.Controller.Component
  */
-class DebugKitToolbarComponentTestCase extends CakeTestCase {
+class ToolbarComponentTestCase extends CakeTestCase {
 
 /**
  * fixtures
@@ -180,7 +175,7 @@ class DebugKitToolbarComponentTestCase extends CakeTestCase {
 		$this->Controller->Toolbar->loadPanels(array('DebugkitTestPlugin.PluginTest'));
 		$this->assertInstanceOf(
 			'PluginTestPanel',
-			$this->Controller->Toolbar->panels['plugintest']
+			$this->Controller->Toolbar->panels['plugin_test']
 		);
 	}
 
@@ -242,7 +237,7 @@ class DebugKitToolbarComponentTestCase extends CakeTestCase {
 		));
 
 		$expected = array(
-			'history', 'session', 'request', 'sqllog', 'timer',
+			'history', 'session', 'request', 'sql_log', 'timer',
 			'log', 'variables', 'environment', 'include', 'test'
 		);
 		$this->assertEquals($expected, array_keys($this->Controller->Toolbar->panels));
@@ -261,7 +256,7 @@ class DebugKitToolbarComponentTestCase extends CakeTestCase {
 			)
 		));
 
-		$expected = array('request', 'sqllog', 'timer', 'log', 'variables', 'environment', 'include');
+		$expected = array('request', 'sql_log', 'timer', 'log', 'variables', 'environment', 'include');
 		$this->assertEquals($expected, array_keys($this->Controller->Toolbar->panels));
 	}
 

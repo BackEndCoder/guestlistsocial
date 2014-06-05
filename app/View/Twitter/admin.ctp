@@ -12,6 +12,7 @@
 
 <?php
 echo $this->Session->flash('auth');
+
 //Select Twitter Account
 echo $this->Form->create('TwitterAccount');
         echo $this->Form->input('Select Account:', array(
@@ -27,9 +28,13 @@ echo $this->Html->link('Info', $info[0]['TwitterAccount']['infolink'], array('ta
 
 <?
 echo $this->Html->link('Edit Info', '/twitter/info');
+if ($this->Session->read('Auth.User.group_id') == 1 || $this->Session->read('Auth.User.group_id') == 5) {
+echo $this->Html->link('Editorial Calendar', '/twitter/calendar/0');
+}
 ?>
 <br/>
 <br/>
+<div id='addTweetWrapper'>
 <?php
 //Add Tweet
 echo $this->Form->create('Tweet', array('url' => array('controller' => 'twitter', 'action' => 'testing'), 'id' => 'submitTweet'));
@@ -38,6 +43,7 @@ echo $this->Form->create('Tweet', array('url' => array('controller' => 'twitter'
 		echo $this->Form->button('Shorten URL', array('id' => 'shortIt', 'class' => 'urlSubmit', 'type' => 'button'));
 echo $this->Form->end(array('id' => 'AddTweet', 'value' => 'AddTweet', 'class' => 'addTweet'));
 ?>
+</div>
 <div id='team'>
 <table>
 <th>My Team</th>
@@ -55,90 +61,19 @@ echo $this->Form->end(array('id' => 'AddTweet', 'value' => 'AddTweet', 'class' =
 	<? } ?>
 	<?php if ($this->Session->read('Auth.User.Team.id') == 0) {echo '<tr><td>' . $this->Html->link('Part of a marketing team?', '/teams/manage') . '</td></tr>';}?>
 </table>
-<? if ($this->Session->read('Auth.User.Team.id') != 0) {echo '<small>Your team\'s code: ' . $this->Session->read('Auth.User.Team.hash') . '</small>'; }?>
+<? if ($this->Session->read('Auth.User.Team.id') != 0) {
+	echo '<small>Your team\'s code: ' . $this->Session->read('Auth.User.Team.hash') . '</small><br />'; 
+	if ($this->Session->read('Auth.User.group_id') == 1 || $this->Session->read('Auth.User.group_id') == 5) {
+		echo '<small>' . $this->Html->link('Manage Team', '/teams/manageteam') . '</small>';
+	}
+	}?>
 </div>
-<?php 
-//Table
-echo $this->Form->create('Tweet', array('url'=>$this->Html->url(array('controller'=>'twitter', 'action'=>'edit')), 'id' => 'edit'));?>
-<table id="table">
-	<th>Schedule</th>
-	<th>Written by</th>
-	<th>Tweet</th>
-	<th>Verified</th>
-	<th>Status</th>
-	<th></th>
-	<?php foreach ($tweets as $key) { ?>
-	<?php if ($key['Tweet']['verified'] == 1) {
-			$checked = 'checked';
-			$value = $key['Tweet']['time'];
-			$color = '#ffb400';
-		} elseif ($key['Tweet']['verified'] == 1 && $key['Tweet']['client_verified'] == 1) {
-			$color = 'Green';
-		} else {
-			$checked = '';
-			$value = '';
-			$color = 'Red';} ?>
-	<tr>
-	  <td class= 'time' id='time<?php echo $key['Tweet']['id']?>'> 
-	  	<div class='notediting'><?php if($key['Tweet']['time'] && $key['Tweet']['published'] == 1) {
-	  		echo $key['Tweet']['time'] . '<small>[Published]</small>';
-	  		} elseif ($key['Tweet']['time']) {
-	  			echo $key['Tweet']['time'];
-	  		} else {
-	  			echo 'Click to schedule';
-	  			} ?>
-	  	</div>
-	  	<?php if($key['Tweet']['published'] == 0) {
-	  		echo $this->Form->input('timestamp', array(
-	  		'type' => 'text', 
-	  		'label' => '', 
-	  		'class' => 'schedule',
-	  		'value' => $key['Tweet']['time'], 
-	  		'id' => 'schedule'.$key['Tweet']['id'], 
-	  		'name' => 'data[Tweet]['.$key['Tweet']['id'].'][timestamp]',
-	  		'style' => 'display: none'
-	  		));
-	  		}
-	  		if($key['Tweet']['verified'] == 0 && strtotime($key['Tweet']['time']) > time()) {
-	  				echo "<span style='color: red'>*Tweet will not be sent until verified</span>";
-	  			}?>
-	  </td>
-	  <td>
-	  	<?php echo $key['Tweet']['first_name']; ?>
-	  </td>
-	  <td class='tweetbody' id=<?php echo $key['Tweet']['id']?>>
-	  	<div class='notediting'><?php echo $key['Tweet']['body']; ?></div>
-	  	<?php echo $this->Form->textarea('body', array(
-	  		'class' => 'editing', 
-	  		'value' => $key['Tweet']['body'], 
-	  		'name' => 'data[Tweet]['.$key['Tweet']['id'].'][body]', 
-	  		'label' => '', 
-	  		'style' => 'display: none')); ?> 
-	  </td>
-	  <td>
-	  	<?php echo $this->Form->input('verified', array(
-	  	'type' => 'checkbox', 
-	  	'value' => 1, 
-	  	'label' => false, 
-	  	'name' => 'data[Tweet]['.$key['Tweet']['id'].'][verified]', 
-	  	$checked, 
-	  	'class' => 'TwitterVerified'));?>
-	  </td>
-	  <td class="color" id=<?php echo $key['Tweet']['id']?>>
-		  <div class='color verified' style='color: <?echo $color;?>'><?php if ($key['Tweet']['client_verified'] == 0 && $key['Tweet']['verified'] == 0) { ?>
-		  Red <?php } elseif ($key['Tweet']['client_verified'] == 0 && $key['Tweet']['verified'] == 1) {?>
-		  Amber <?php } elseif ($key['Tweet']['client_verified'] == 1 && $key['Tweet']['verified'] == 1) {?>
-		  Green <?php } ?></div>
-	  </td>
-	  <td>
-	  	<?php echo $this->Form->button('Delete', array('type' => 'button', 'class' => 'delete', 'id' => $key['Tweet']['id'])); ?>
-	  </td>
-	  <?php echo $this->Form->input('id', array('type' => 'hidden', 'value' => $key['Tweet']['id'], 'name' => 'data[Tweet]['.$key['Tweet']['id'].'][id]'));?>
-	</tr>
-	<?php } ?>
-</table>
-<?php echo $this->Form->end('Go'); ?>
 
+<!--Table goes here -->
+<table id='table'>
+</table>
+<table id='table1'>
+</table>
 <?php
 //Select Twitter Account
 echo $this->Form->create('TwitterAccount');
@@ -159,7 +94,18 @@ echo $this->Form->end();?>
         $(document).ready(function () { 
         	var options = { 
         		clearForm: true
-			}; 
+			};
+			<? if ($this->Session->read('Auth.User.calendar_activated') == 1) {
+				if ($this->Session->read('access_token.account_id') !== null) {?>
+				$('#table1').load('/editorial_calendars/calendarrefresh/<?echo $this->Session->read("Auth.User.monthSelector");?>', function() {
+					$('#addTweetWrapper').load("/editorial_calendars/editorialrefresh");
+				});
+				<?}?>
+			<?} else {?>
+				$('#table').load('/twitter/tablerefresh', function() {
+				});
+			<?}?>
+			
             // bind 'myForm' and provide a simple callback function 
             $('#submitTweet').ajaxForm(function(options) { 
  				$("#TweetBody").val("");
@@ -216,6 +162,7 @@ echo $this->Form->end();?>
 				id = $(this).attr('id');
 				$("#" + id + " .notediting").hide();
 				$("#" + id + " .editing").show();
+				$("#" + id + " .editing").focus();
 			});
 
 			$("#table").on("click", ".time", function() {
@@ -224,7 +171,24 @@ echo $this->Form->end();?>
 						$("#" + id + " .notediting").hide();
 				}
 				$("#" + id + " .schedule").show();
+				$("#" + id + " .schedule").focus();
 				$("#" + id + " .schedule").css("margin-bottom", "1em");
+			});
+
+			$(".editing").blur(function(){
+				id = $(this).parent().attr('id');
+				$("#" + id + " .editing").hide();
+				value = $("#" + id + " .editing").val();
+				$("#" + id + " .notediting").text(value)
+				$("#" + id + " .notediting").show();
+			});
+
+			$(".schedule").blur(function(){
+				id = $(this).parent().parent().attr('id');
+				$("#" + id + " .schedule").hide();
+				value = $("#" + id + " .schedule").val();
+				$("#" + id + " .notediting").text(value)
+				$("#" + id + " .notediting").show();
 			});
 
 
@@ -248,8 +212,13 @@ echo $this->Form->end();?>
 				});
     		});
 
+    		$("#table").on("change", "#monthSelector", function() {
+    			//alert('Hi');
+    		});
+
     		jQuery.urlShortener.settings.apiKey = 'AIzaSyC27e05Qg5Tyghi1dk5U7-nNDC0_wift08';
 			$("#shortIt").click(function () {
+				alert('test');
     			//$("#shortUrlInfo").html("<img src='images/loading.gif'/>");
     			regex = /(https?:\/\/(?:www\.|(?!www))[^\s\.]+\.[^\s]{2,}|www\.[^\s]+\.[^\s]{2,})/g ;
     			var longUrlLink = $("#TweetBody").val().match(regex);
@@ -264,7 +233,6 @@ echo $this->Form->end();?>
         				$("#shortUrlInfo").html(JSON.stringify(err));
         			}
     			});
-
 			});
         });
 

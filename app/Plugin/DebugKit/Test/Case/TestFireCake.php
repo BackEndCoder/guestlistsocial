@@ -12,17 +12,15 @@
  *
  * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
- * @package       DebugKit.Test.Case
  * @since         DebugKit 0.1
  * @license       http://www.opensource.org/licenses/mit-license.php MIT License
- **/
+ */
 
 App::uses('FireCake', 'DebugKit.Lib');
 
 /**
  * TestFireCake class allows for testing of FireCake
  *
- * @package       DebugKit.Test.Case
  * @since         DebugKit 0.1
  */
 class TestFireCake extends FireCake {
@@ -58,7 +56,7 @@ class TestFireCake extends FireCake {
  * Reset FireCake
  *
  * @return void
- **/
+ */
 	public static function reset() {
 		$_this = FireCake::getInstance();
 		$_this->sentHeaders = array();

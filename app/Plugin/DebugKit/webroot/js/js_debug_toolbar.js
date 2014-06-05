@@ -14,14 +14,11 @@
  *
  * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
- * @package       DebugKit.webroot.js
  * @since         DebugKit 0.1
  * @license       http://www.opensource.org/licenses/mit-license.php MIT License
  */
 
 /* jshint jquery: true */
-
-/* global ActiveXObject: false */
 
 var DEBUGKIT = function () {
 	var undef;
@@ -36,7 +33,45 @@ var DEBUGKIT = function () {
 	};
 }();
 
-DEBUGKIT.$ = jQuery.noConflict(true);
+(function () {
+	function versionGTE(a, b) {
+		var len = Math.min(a.length, b.length);
+		for (var i = 0; i < len; i++) {
+			a[i] = parseInt(a[i], 10);
+			b[i] = parseInt(b[i], 10);
+			if (a[i] > b[i]) {
+				return true;
+			}
+			if (a[i] < b[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	function versionWithin(version, min, max) {
+		version = version.split('.');
+		min = min.split('.');
+		max = max.split('.');
+		return versionGTE(version, min) && versionGTE(max, version);
+	}
+
+	// Look for existing jQuery that matches the requirements.
+	if (window.jQuery && versionWithin(jQuery.fn.jquery, "1.8", "2.1")) {
+		DEBUGKIT.$ = window.jQuery;
+	} else {
+		// sync load the file. Using document.write() does not block
+		// in recent versions of chrome.
+		var req = new XMLHttpRequest();
+		req.onload = function () {
+			eval(this.responseText);
+			// Restore both $ and jQuery to the original values.
+			DEBUGKIT.$ = jQuery.noConflict(true);
+		};
+		req.open('get', window.DEBUGKIT_JQUERY_URL, false);
+		req.send();
+	}
+})();
 
 DEBUGKIT.loader = function () {
 	return {
@@ -62,7 +97,7 @@ DEBUGKIT.sqlLog = function () {
 
 	return {
 		init : function () {
-			var sqlPanel = $('#sqllog-tab');
+			var sqlPanel = $('#sql_log-tab');
 			var buttons = sqlPanel.find('input');
 
 			// Button handling code for explain links.
