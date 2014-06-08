@@ -2,9 +2,30 @@
 App::import('Vendor', 'OAuth/OAuthClient');
 
 class TwitterController extends AppController {
-    public $components = array('Session', 'Auth');
+    public $components = array('Session', 'Auth', 'Paginator');
     public $helpers =  array('Html' , 'Form');
     var $uses = array('TwitterAccount', 'CronTweet', 'Tweet', 'User', 'TwitterPermission', 'EditorialCalendar');
+    public $paginate = array(
+        'limit' => 25
+    );
+
+    public function index() {
+        $this->Paginator->settings = array(
+        'conditions' => array('team_id' => $this->Session->read('Auth.User.Team.id'), 'verified' => 0, 'published' => 0, 'timestamp >' => time()),
+        'limit' => 10
+        );
+
+        //$toCheck = $this->Tweet->find('all', array('fields' => array('id', 'body', 'verified', 'client_verified', 'time', 'published', 'first_name', 'account_id'), 'conditions' => array('team_id' => $this->Session->read('Auth.User.Team.id'), 'verified' => 0, 'published' => 0, 'timestamp >' => time()), 'order' => array('Tweet.timestamp' => 'ASC')));
+        $toCheck = $this->Paginator->paginate('Tweet');
+
+            $i = 0;
+        foreach ($toCheck as $key) {
+            $array = $this->TwitterAccount->find('first', array('fields' => 'screen_name', 'conditions' => array('account_id' => $key['Tweet']['account_id'])));
+            $toCheck[$i]['Tweet']['screen_name'] = $array['TwitterAccount']['screen_name'];
+            $i++;
+        }
+        $this->set('tweets', $toCheck);
+    }
 
     public function admin() {
         if (isset($this->request->data['currentmonth'])) {
@@ -222,7 +243,38 @@ class TwitterController extends AppController {
             }
         }
 
-        $this->redirect(array('action' => 'admin'));
+        $this->redirect(Controller::referer());
+    }
+
+    public function emptySave() {
+        debug($this->request->data);
+        foreach ($this->request->data['Tweet'] as $key) {
+            if ($key['id']) {
+            $id = $key['id'];
+            $this->Tweet->id = $id;
+            $this->CronTweet->id = $id;
+            $tweet = $this->Tweet->find('first', array('conditions' => array('id' => $id)));
+            }
+
+            if ($key['timestamp']) {
+            $key['time'] = $key['timestamp'];
+            $key['timestamp'] = strtotime($key['timestamp']);
+            } else {
+            $key['timestamp'] = 0;
+            }
+
+            if ($this->Tweet->saveField('verified', $key['verified'])) {
+                if ($key['verified'] == 1) {
+                    $this->CronTweet->save($key);
+                    $this->CronTweet->deleteAll(array('timestamp' => 0));
+                }
+            } else {
+            $this->Session->setFlash('Unable to update your post.');
+            }
+        }
+
+        $this->redirect(Controller::referer());
+        
     }
 
     public function delete($id) {

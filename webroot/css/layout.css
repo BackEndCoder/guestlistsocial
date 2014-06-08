@@ -150,12 +150,13 @@ th a {
 	padding: 2px 4px;
 	text-decoration: none;
 }
+/*
 th a.asc:after {
 	content: ' ⇣';
 }
 th a.desc:after {
 	content: ' ⇡';
-}
+}  */
 table tr td {
 	padding: 6px;
 	text-align: left;
@@ -757,7 +758,6 @@ textarea.editing {
 }
 
 #team {
-	width: 20%;
 	float: left;
 }
 
@@ -774,7 +774,27 @@ textarea.editing {
 	height: 75px;
 }
 
+#table tr:first-child {
+	height: auto;
+}
+
 .nopadding {
 	padding: 0;
 	height:75px;
+}
+
+#table thead tr .asc {
+	background: url(../img/asc.gif) no-repeat right;
+}
+#table thead tr .desc {
+	background: url(../img/desc.gif) no-repeat right;
+}
+
+.asc,.desc,#table a {
+	color: #333;
+}
+
+#team {
+	right:0px;
+	position: absolute;
 }

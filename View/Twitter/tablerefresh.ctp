@@ -119,15 +119,28 @@
 				id = $(this).parent().attr('id');
 				$("#" + id + " .editing").hide();
 				value = $("#" + id + " .editing").val();
-				$("#" + id + " .notediting").text(value)
+				$("#" + id + " .notediting").text(value);
 				$("#" + id + " .notediting").show();
+			});
+
+			$("#table").on("change", ".schedule", function() {
+				id = $(this).parent().parent().attr('id');
+				value = $("#" + id + " .schedule").val();
+				$("#" + id + " .notediting").text(value);
 			});
 
 			$(".schedule").blur(function(){
 				id = $(this).parent().parent().attr('id');
 				$("#" + id + " .schedule").hide();
 				value = $("#" + id + " .schedule").val();
-				$("#" + id + " .notediting").text(value)
+				$("#" + id + " .notediting").text(value);
 				$("#" + id + " .notediting").show();
 			});
+
+			$('.schedule').each(function(){
+				$(this).datetimepicker({
+    				dateFormat: 'dd-mm-yy',
+    				altFormat: '@',
+				});
+    		});
 </script>

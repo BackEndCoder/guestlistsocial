@@ -62,9 +62,10 @@ echo $this->Form->end(array('id' => 'AddTweet', 'value' => 'AddTweet', 'class' =
 	<?php if ($this->Session->read('Auth.User.Team.id') == 0) {echo '<tr><td>' . $this->Html->link('Part of a marketing team?', '/teams/manage') . '</td></tr>';}?>
 </table>
 <? if ($this->Session->read('Auth.User.Team.id') != 0) {
-	echo '<small>Your team\'s code: ' . $this->Session->read('Auth.User.Team.hash') . '</small><br />'; 
+	echo '<small>Your team\'s code: <br />' . $this->Session->read('Auth.User.Team.hash') . '</small><br />'; 
 	if ($this->Session->read('Auth.User.group_id') == 1 || $this->Session->read('Auth.User.group_id') == 5) {
-		echo '<small>' . $this->Html->link('Manage Team', '/teams/manageteam') . '</small>';
+		echo '<small>' . $this->Html->link('Manage Team', '/teams/manageteam') . '</small> <br />';
+		echo '<small>' . $this->Html->link('Manage Tweets', '/twitter/index') . '</small>';
 	}
 	}?>
 </div>
@@ -92,9 +93,8 @@ echo $this->Form->end();?>
 <script> 
         // wait for the DOM to be loaded 
         $(document).ready(function () { 
-        	var options = { 
-        		clearForm: true
-			};
+
+        	
 			<? if ($this->Session->read('Auth.User.calendar_activated') == 1) {
 				if ($this->Session->read('access_token.account_id') !== null) {?>
 				$('#table1').load('/editorial_calendars/calendarrefresh/<?echo $this->Session->read("Auth.User.monthSelector");?>', function() {
@@ -204,13 +204,6 @@ echo $this->Form->end();?>
 				   }
 				}
 			});
-
-			$('.schedule').each(function(){
-				$(this).datetimepicker({
-    				dateFormat: 'dd-mm-yy',
-    				altFormat: '@',
-				});
-    		});
 
     		$("#table").on("change", "#monthSelector", function() {
     			//alert('Hi');
