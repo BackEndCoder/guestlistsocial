@@ -4,7 +4,8 @@
         <?php echo $this->Form->input('first_name', array('label' => 'First name'));
         echo $this->Form->input('last_name', array('label' => 'Last name'));
         echo $this->Form->input('email');
-        echo $this->Form->input('password');
+        echo $this->Form->input('password', array('type' => 'password'));
+        echo $this->Form->input('password2', array('type' => 'password', 'Confirm Password'));
         echo $this->Form->input('GMT_offset', array(
     	'options' => array(
     		  '-12.0' => '(GMT -12:00) Eniwetok, Kwajalein',

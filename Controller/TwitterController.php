@@ -5,9 +5,6 @@ class TwitterController extends AppController {
     public $components = array('Session', 'Auth', 'Paginator');
     public $helpers =  array('Html' , 'Form');
     var $uses = array('TwitterAccount', 'CronTweet', 'Tweet', 'User', 'TwitterPermission', 'EditorialCalendar');
-    public $paginate = array(
-        'limit' => 25
-    );
 
     public function index() {
         $this->Paginator->settings = array(
@@ -286,7 +283,8 @@ class TwitterController extends AppController {
     }
 
     public function tablerefresh() {
-        $tweets = $this->Tweet->find('all', array('fields' => array('id', 'body', 'verified', 'client_verified', 'time', 'published', 'first_name'), 'conditions' => array('account_id' => $this->Session->read('access_token.account_id')), 'order' => array('Tweet.timestamp' => 'ASC')));
+        $this->Paginator->settings = array('fields' => array('id', 'body', 'verified', 'client_verified', 'time', 'published', 'first_name'), 'conditions' => array('account_id' => $this->Session->read('access_token.account_id')), 'order' => array('Tweet.timestamp' => 'ASC'));
+        $tweets = $this->Paginator->paginate('Tweet');
         $this->set('tweets', $tweets);
         $this->layout = '';
     }

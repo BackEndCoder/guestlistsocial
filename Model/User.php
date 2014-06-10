@@ -13,6 +13,22 @@ class User extends AppModel {
             'required' => array(
                 'rule' => array('notEmpty'),
                 'message' => 'A password is required'
+            ),
+            'between' => array(
+                'rule'    => array('between', 6, 20),
+                'message' => 'Password must be between 6 and 20 characters',
+                'last' => false
+            ),
+            'alphanumeric' => array(
+                'rule' => 'alphanumeric',
+                'message' => 'Password must contain only letters and numbers.'
+            )
+        ),
+        'password2' => array(
+            'equaltofield' => array(
+            'rule' => array('equaltofield','password'),
+            'message' => 'Passwords do not match.',
+            'on' => 'create'
             )
         )
     );
@@ -61,6 +77,16 @@ class User extends AppModel {
             return array('Group' => array('id' => $groupId));
         }
     }
+
+    function equaltofield($check,$otherfield) {
+        //get name of field
+        $fname = '';
+        foreach ($check as $key => $value){
+            $fname = $key;
+            break;
+        }
+        return $this->data[$this->name][$otherfield] === $this->data[$this->name][$fname];
+    } 
 
 }
 ?>
