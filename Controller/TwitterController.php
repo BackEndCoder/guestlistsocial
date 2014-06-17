@@ -7,12 +7,30 @@ class TwitterController extends AppController {
     var $uses = array('TwitterAccount', 'CronTweet', 'Tweet', 'User', 'TwitterPermission', 'EditorialCalendar');
 
     public function index() {
+        $conditions = array('team_id' => $this->Session->read('Auth.User.Team.id'));
+
+        $dropdownaccounts = $this->TwitterAccount->find('list', array('fields' => array('screen_name'), 'conditions' => $conditions, 'order' => array('screen_name' => 'ASC')));
+        $this->set('dropdownaccounts', $dropdownaccounts);
+
+        $dropdownusers = $this->User->find('list', array('fields' => array('id', 'first_name'), 'conditions' => $conditions));
+        $this->set('dropdownusers', $dropdownusers);
+
+        if (isset($this->request->data['filterUser']['user']) && $this->request->data['filterUser']['user'] != 'empty') {//If filltering by user
+            $written_by = $this->User->find('first', array('fields' => 'first_name', 'conditions' => array('User.id' => $this->request->data['filterUser']['user'])));
+            $c = array('team_id' => $this->Session->read('Auth.User.Team.id'), 'verified' => 0, 'published' => 0, 'timestamp >' => time(), 'first_name' => $written_by['User']['first_name']);
+        } elseif (isset($this->request->data['filterAccount']['account']) && $this->request->data['filterAccount']['account'] != 'empty') {//If filtering by account
+            $twitter_account_id =  $this->TwitterAccount->find('first', array('fields' => 'account_id', 'conditions' => array('screen_name' => $this->request->data['filterAccount']['account'])));
+            $c = array('team_id' => $this->Session->read('Auth.User.Team.id'), 'verified' => 0, 'published' => 0, 'timestamp >' => time(), 'account_id' => $twitter_account_id['TwitterAccount']['account_id']);
+        } else {
+            $c = array('team_id' => $this->Session->read('Auth.User.Team.id'), 'verified' => 0, 'published' => 0, 'timestamp >' => time());
+        }
+
         $this->Paginator->settings = array(
-        'conditions' => array('team_id' => $this->Session->read('Auth.User.Team.id'), 'verified' => 0, 'published' => 0, 'timestamp >' => time()),
+        'conditions' => $c,
         'limit' => 10
         );
 
-        //$toCheck = $this->Tweet->find('all', array('fields' => array('id', 'body', 'verified', 'client_verified', 'time', 'published', 'first_name', 'account_id'), 'conditions' => array('team_id' => $this->Session->read('Auth.User.Team.id'), 'verified' => 0, 'published' => 0, 'timestamp >' => time()), 'order' => array('Tweet.timestamp' => 'ASC')));
+        
         $toCheck = $this->Paginator->paginate('Tweet');
 
             $i = 0;
@@ -58,9 +76,9 @@ class TwitterController extends AppController {
         $this->set('teamMembers', $teamMembers);
         
         if ($this->Session->read('Auth.User.id') == 0 || $this->Session->read('Auth.User.id') == 1) {
-            $accounts = $this->TwitterAccount->find('list', array('fields' => array('screen_name')));
+            $accounts = $this->TwitterAccount->find('list', array('fields' => array('screen_name'), 'order' => array('screen_name' => 'ASC')));
         } else {
-            $accounts = $this->TwitterAccount->find('list', array('fields' => array('screen_name'), 'conditions' => $conditions));
+            $accounts = $this->TwitterAccount->find('list', array('fields' => array('screen_name'), 'conditions' => $conditions, 'order' => array('screen_name' => 'ASC')));
         }
         
         $this->set('accounts', $accounts);
@@ -98,9 +116,9 @@ class TwitterController extends AppController {
         $this->set('teamMembers', $teamMembers);
         
         if ($this->Session->read('Auth.User.id') == 0 || $this->Session->read('Auth.User.id') == 1) {
-            $accounts = $this->TwitterAccount->find('list', array('fields' => array('screen_name')));
+            $accounts = $this->TwitterAccount->find('list', array('fields' => array('screen_name'), 'order' => array('screen_name' => 'ASC')));
         } else {
-            $accounts = $this->TwitterAccount->find('list', array('fields' => array('screen_name'), 'conditions' => array('account_id' => $permissions)));
+            $accounts = $this->TwitterAccount->find('list', array('fields' => array('screen_name'), 'conditions' => array('account_id' => $permissions), 'order' => array('screen_name' => 'ASC')));
         }
         
         $this->set('accounts', $accounts);
@@ -261,6 +279,7 @@ class TwitterController extends AppController {
             }
 
             if ($this->Tweet->saveField('verified', $key['verified'])) {
+                $this->Tweet->saveField('body', $key['body']);
                 if ($key['verified'] == 1) {
                     $this->CronTweet->save($key);
                     $this->CronTweet->deleteAll(array('timestamp' => 0));
@@ -320,10 +339,5 @@ class TwitterController extends AppController {
         } elseif ($data == 0) {
             $this->Session->setFlash('Editorial Calendars deactivated.');
         }
-    }
-
-
-    public function adminView() {
-
     }
 }

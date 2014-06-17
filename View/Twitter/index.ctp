@@ -4,6 +4,21 @@ echo $this->Html->script('jquery.tablesorter');
 echo $this->Session->flash('auth');
 ?>
 <b>To be verified:</b>
+<?
+echo $this->Form->create('filterAccount');
+echo $this->Form->input('account', array(
+    'label' => 'Select by Twitter Account:',
+    'onchange' => 'this.form.submit()',
+    'options' => array('empty' => 'Select Account...', array_combine($dropdownaccounts,$dropdownaccounts))));
+echo $this->Form->end();
+
+echo $this->Form->create('filterUser');
+echo $this->Form->input('user', array(
+    'label' => 'Select by User:',
+    'onchange' => 'this.form.submit()',
+    'options' => array('empty' => 'Select User...', $dropdownusers)));
+echo $this->Form->end();
+?>
 <table>
 <tr><td><?echo $this->Form->create('Tweet', array('url'=>$this->Html->url(array('controller'=>'twitter', 'action'=>'emptySave')), 'id' => 'edit'));?>
 <table id="table">
@@ -62,13 +77,11 @@ echo $this->Session->flash('auth');
         <?php echo $key['Tweet']['first_name']; ?>
       </td>
       <td class='tweetbody' id=<?php echo $key['Tweet']['id']?>>
-        <div class='notediting'><?php echo $key['Tweet']['body']; ?></div>
         <?php echo $this->Form->textarea('body', array(
             'class' => 'editing', 
             'value' => $key['Tweet']['body'], 
             'name' => 'data[Tweet]['.$key['Tweet']['id'].'][body]', 
             'label' => false, 
-            'style' => 'display: none',
             'maxlength' => '140')); ?> 
       </td>
       <td>
@@ -114,18 +127,6 @@ echo $this->Session->flash('auth');
 
 <script>
 $(document).ready(function() { 
-        /*$("#table").tablesorter({
-            dateFormat: "uk",
-            headers: { 
-            4: { 
-                sorter: false 
-            }, 
-            5: { 
-                sorter: false 
-            } 
-            }
-        }); */
-
         $("#table").on("click", ".delete", function() {
             id = $(this).attr('id');
             $.ajax({url: "/twitter/delete/" + id, success: function() {

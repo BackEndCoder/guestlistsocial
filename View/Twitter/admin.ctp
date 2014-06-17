@@ -28,9 +28,7 @@ echo $this->Html->link('Info', $info[0]['TwitterAccount']['infolink'], array('ta
 
 <?
 echo $this->Html->link('Edit Info', '/twitter/info');
-if ($this->Session->read('Auth.User.group_id') == 1 || $this->Session->read('Auth.User.group_id') == 5) {
 echo $this->Html->link('Editorial Calendar', '/twitter/calendar/0');
-}
 ?>
 <br/>
 <br/>
@@ -204,10 +202,6 @@ echo $this->Form->end();?>
 				   }
 				}
 			});
-
-    		$("#table").on("change", "#monthSelector", function() {
-    			//alert('Hi');
-    		});
 
     		jQuery.urlShortener.settings.apiKey = 'AIzaSyC27e05Qg5Tyghi1dk5U7-nNDC0_wift08';
 			$("#shortIt").click(function () {

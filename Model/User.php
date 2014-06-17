@@ -30,6 +30,12 @@ class User extends AppModel {
             'message' => 'Passwords do not match.',
             'on' => 'create'
             )
+        ),
+        'first_name' => array(
+            'required' => array(
+                'rule' => array('notEmpty'),
+                'message' => 'Please enter your first name'
+            )
         )
     );
 

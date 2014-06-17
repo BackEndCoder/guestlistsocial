@@ -51,39 +51,55 @@ class TeamsController extends AppController {
 	}
 
 	public function manageteam() {
-		if ($this->request->data) {
-			debug($this->request->data);
-		}
 		$conditions = array('team_id' => $this->Session->read('Auth.User.Team.id'));
-		$accounts = $this->TwitterAccount->find('all', array('fields' => array('screen_name', 'account_id'), 'conditions' => $conditions));
+		$accounts = $this->TwitterAccount->find('all', array('fields' => array('screen_name', 'account_id'), 'conditions' => $conditions, 'order' => array('screen_name' => 'ASC')));
 		$this->set('accounts', $accounts);
-		$users = $this->User->find('list', array('fields' => array('first_name'), 'conditions' => $conditions));
 
-		//use a foreach loop
-		foreach ($users as $key => $value) {
-			$permissions = $this->TwitterPermission->find('list', array('fields' => 'twitter_account_id', 'conditions' => array('user_id' => $key)));
-			$users[$key] = array('name' => $value , 'user_id' => $key, 'permissions' => $permissions);
+
+		$dropdownaccounts = $this->TwitterAccount->find('list', array('fields' => array('screen_name'), 'conditions' => $conditions, 'order' => array('screen_name' => 'ASC')));
+		$this->set('dropdownaccounts', $dropdownaccounts);
+
+		$dropdownusers = $this->User->find('list', array('fields' => array('id', 'first_name'), 'conditions' => $conditions));
+		$this->set('dropdownusers', $dropdownusers);
+
+		if (isset($this->request->data['filterUser'])) {//If filltering by user
+			$userx = $this->User->find('all', array('fields' => array('first_name', 'id'), 'conditions' => array('User.id' => $this->request->data['filterUser']['user'])));
+				$permissions = $this->TwitterPermission->find('list', array('fields' => 'twitter_account_id', 'conditions' => array('user_id' => $this->request->data['filterUser']['user'])));
+				$users = array('user_id' => $userx[0]['User']['id'] , 'name' => $userx[0]['User']['first_name'], 'permissions' => $permissions);
+			$currentUser = $this->User->find('first', array('fields' => 'first_name', 'conditions' => array('User.id' => $this->request->data['filterUser']['user'])));
+			$this->set('currentUser', $currentUser['User']['first_name']);
+			$this->set('userTable', true);
+
+
+		} elseif (isset($this->request->data['filterAccount'])) {//If filtering by account
+			$twitter_account_id =  $this->TwitterAccount->find('first', array('fields' => 'account_id', 'conditions' => array('screen_name' => $this->request->data['filterAccount']['account'])));
+			$users = $this->User->find('list', array('fields' => array('first_name', 'id'), 'conditions' => $conditions));
+			foreach ($users as $key => $value) {
+				$permissions = $this->TwitterPermission->find('list', array('fields' => 'twitter_account_id', 'conditions' => array('user_id' => $value)));
+				$users[$key] = array('user_id' => $value , 'name' => $key, 'permissions' => $permissions);
+			}
+			$this->set('twitter_account_id', (int)$twitter_account_id['TwitterAccount']['account_id']);
+			$this->set('currentAccount', $this->request->data['filterAccount']['account']);
+			$this->set('accountTable', true);
+		} else {
+			$users = '';
 		}
 
 		$this->set('users', $users);
-		//$permissions = $this->TwitterPermission->find('list', array('fields' => 'twitter_user_id', 'conditions' => array('user_id' => $userID)));
 	}
 
 	public function permissionSave() {
 		$data = $this->request->data;
-		debug($data);
+		debug($this->request->data);
 		//$dbComparisons = $this->TwitterPermission->find('all', array('conditions' => array('team_id' => $this->Session->read('Auth.User.Team.id'))));
+		$i = 0;
 		foreach ($data['Teams'] as $key) {
 			foreach ($key['permissions'] as $key1 => $value1) {
+				$i++;
 				if ($value1 !== '0') {
 					//$dbComparisons = $this->TwitterPermission->find('count', array('consitions' => array('team_id' => $key['team_id'], 'user_id' => $value1, 'twitter_account_id' => $key1)));
 					//check if permission exists
 					if ($this->TwitterPermission->hasAny(array('team_id' => $key['team_id'], 'user_id' => $value1, 'twitter_account_id' => $key1))) {
-						$id = $this->TwitterPermission->find('list', array('fields' => array('id'), 'conditions' => array('team_id' => $key['team_id'], 'user_id' => $value1, 'twitter_account_id' => $key1)));
-						$this->TwitterPermission->id = $id;
-						$this->TwitterPermission->saveField('user_id', $value1);
-						$this->TwitterPermission->saveField('twitter_account_id', $key1);
-						$this->TwitterPermission->saveField('team_id', $key['team_id']);
 					} else {
 						$this->TwitterPermission->create();
 						$this->TwitterPermission->saveField('user_id', $value1);
@@ -100,6 +116,7 @@ class TeamsController extends AppController {
 				}
 			}
 		}
+		echo $i;
 		$this->Session->setFlash('Changes successfully saved');
 		$this->redirect('/teams/manageteam');
 	}
